@@ -21,3 +21,13 @@ dotnet publish src/Nomina.Web -c Release --no-self-contained -p:UseAppHost=false
 ```
 
 Publicar el **contenido** de `artifacts/publicacion` en la raíz pública del sitio, incluido el `web.config` generado por el SDK. Usar HTTPS antes de habilitar cualquier formulario que reciba credenciales.
+
+## Aplicar el esquema en Somee
+
+Con `dotnet-ef` versión `10.0.15` instalado, genera un script sin necesitar la contraseña:
+
+```sh
+dotnet ef migrations script --idempotent --project src/Nomina.Web -o artifacts/esquema-somee.sql
+```
+
+En el panel HTTPS de Somee, abre **MS SQL → PruebaTecDB → Run scripts → From your computer** y selecciona `artifacts/esquema-somee.sql`. No lo subas al File Manager del sitio. El script registra la migración en `__EFMigrationsHistory`; verifica esa tabla desde la consola T-SQL. `/health/db` solo comprueba la conexión y no sustituye este paso.
