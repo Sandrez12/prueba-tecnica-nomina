@@ -19,7 +19,7 @@
 }
 @if (Model.People.Count == 0)
 {
-    <p>No hay personas activas disponibles para registrar novedades.</p>
+    <p class="empty-state">No hay personas activas disponibles para registrar novedades.</p>
 }
 else
 {
@@ -58,17 +58,18 @@ else
 <h2 class="h5">Registros recientes</h2>
 @if (Model.Events.Count == 0)
 {
-    <p>Aún no hay novedades visibles.</p>
+    <p class="empty-state">Aún no hay novedades visibles.</p>
 }
 else
 {
-    <div class="table-responsive">
+    <div class="table-responsive data-panel" tabindex="0" role="region" aria-label="Registros recientes">
         <table class="table table-striped">
-            <thead><tr><th scope="col">Fecha</th><th scope="col">Persona</th><th scope="col">Tipo</th></tr></thead>
+            <thead><tr><th scope="col">Fecha</th><th scope="col">Persona</th><th scope="col">Tipo</th><th scope="col">Acciones</th></tr></thead>
             <tbody>
             @foreach (var entry in Model.Events)
             {
-                <tr><td>@entry.Date.ToString("dd/MM/yyyy")</td><td>@entry.Name</td><td>@kinds[entry.Kind]</td></tr>
+                <tr><td>@entry.Date.ToString("dd/MM/yyyy")</td><td>@entry.Name</td><td>@kinds[entry.Kind]</td>
+                    <td><a asp-action="Edit" asp-route-id="@entry.Id" class="btn btn-sm btn-outline-primary">Revisar novedad</a></td></tr>
             }
             </tbody>
         </table>

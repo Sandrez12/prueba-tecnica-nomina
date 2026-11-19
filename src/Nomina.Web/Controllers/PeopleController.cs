@@ -26,14 +26,18 @@ public sealed class PeopleController(NominaDbContext db, UserManager<Person> use
             .ToListAsync(cancellationToken));
 
     [HttpGet("nueva")]
-    public IActionResult Create() => View(new NewPersonInput());
+    public async Task<IActionResult> Create(CancellationToken ct)
+    {
+        await LoadRoleOptions(ct);
+        return View(new NewPersonInput());
+    }
 
     [HttpPost("nueva")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(NewPersonInput input, CancellationToken cancellationToken)
     {
-        if (input.Role is not (Roles.Worker or Roles.Lead or Roles.Accountant))
-            ModelState.AddModelError(nameof(input.Role), "Selecciona un rol válido.");
+        await LoadRoleOptions(cancellationToken);
+        ValidateRole(input);
         if (!ModelState.IsValid)
             return Failed(input);
 
@@ -89,6 +93,7 @@ public sealed class PeopleController(NominaDbContext db, UserManager<Person> use
         var person = await FindWithContacts(id, ct);
         if (person is null) return NotFound();
         if (await users.IsInRoleAsync(person, Roles.Admin)) return Forbid();
+        await LoadRoleOptions(ct);
         return View(new PersonInput
         {
             Id = person.Id, FirstName = person.FirstName, LastName = person.LastName,
@@ -108,8 +113,8 @@ public sealed class PeopleController(NominaDbContext db, UserManager<Person> use
         if (person is null) return NotFound();
         if (await users.IsInRoleAsync(person, Roles.Admin)) return Forbid();
         input.Id = id;
-        if (input.Role is not (Roles.Worker or Roles.Lead or Roles.Accountant))
-            ModelState.AddModelError(nameof(input.Role), "Selecciona un rol válido.");
+        await LoadRoleOptions(ct);
+        ValidateRole(input);
         if (!ModelState.IsValid) return View(input);
 
         var document = input.Document.Trim().ToUpperInvariant();
@@ -204,14 +209,72 @@ public sealed class PeopleController(NominaDbContext db, UserManager<Person> use
         }
     }
 
+    private async Task LoadRoleOptions(CancellationToken ct) =>
+        ViewData["RoleOptions"] = await db.Roles.AsNoTracking()
+            .Where(r => r.Name != null && r.Name != Roles.Admin)
+            .OrderBy(r => r.Name).Select(r => r.Name!).ToListAsync(ct);
+
+    private void ValidateRole(PersonInput input)
+    {
+        if (ViewData["RoleOptions"] is not List<string> options || !options.Contains(input.Role, StringComparer.Ordinal))
+            ModelState.AddModelError(nameof(input.Role), "Selecciona un rol válido.");
+    }
+
     private Task<Person?> FindWithContacts(string id, CancellationToken ct) =>
         db.Users.Include(p => p.Addresses).Include(p => p.Phones).AsSplitQuery()
             .FirstOrDefaultAsync(p => p.Id == id, ct);
+
+    [HttpGet("{id}/contactos")]
+    public async Task<IActionResult> Contacts([FromRoute] string id, CancellationToken ct)
+    {
+        var person = await FindWithContacts(id, ct);
+        if (person is null) return NotFound();
+        if (await users.IsInRoleAsync(person, Roles.Admin)) return Forbid();
+        return View(new ContactPage(id, $"{person.FirstName} {person.LastName}", new()
+        {
+            Addresses = string.Join('\n', person.Addresses.OrderBy(a => a.Id).Select(a => a.Value)),
+            Phones = string.Join('\n', person.Phones.OrderBy(p => p.Id).Select(p => p.Number))
+        }));
+    }
+
+    [HttpPost("{id}/contactos")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Contacts([FromRoute] string id, ContactInput input, CancellationToken ct)
+    {
+        var person = await FindWithContacts(id, ct);
+        if (person is null) return NotFound();
+        if (await users.IsInRoleAsync(person, Roles.Admin)) return Forbid();
+        var addresses = ParseLines(input.Addresses);
+        var phones = ParseLines(input.Phones);
+        if (addresses.Length is < 1 or > 20 || addresses.Any(a => a.Length > 250))
+            ModelState.AddModelError(nameof(input.Addresses), "Registra de 1 a 20 direcciones de hasta 250 caracteres cada una.");
+        if (phones.Length is < 1 or > 20 || phones.Any(p => p.Length > 40))
+            ModelState.AddModelError(nameof(input.Phones), "Registra de 1 a 20 teléfonos de hasta 40 caracteres cada uno.");
+        if (!ModelState.IsValid) return View(new ContactPage(id, $"{person.FirstName} {person.LastName}", input));
+
+        db.RemoveRange(person.Addresses);
+        db.RemoveRange(person.Phones);
+        person.Addresses = addresses.Select(a => new Address { PersonId = id, Value = a }).ToList();
+        person.Phones = phones.Select(p => new Phone { PersonId = id, Number = p }).ToList();
+        person.ConcurrencyStamp = Guid.NewGuid().ToString();
+        try { await db.SaveChangesAsync(ct); }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict("La ficha cambió mientras editabas sus contactos. Vuelve a abrirla.");
+        }
+        TempData["PeopleMessage"] = "Contactos actualizados.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    private static string[] ParseLines(string? value) =>
+        (value ?? "").Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 
     private async Task<bool> HasReferences(string id, CancellationToken ct) =>
         await db.PayrollLines.AnyAsync(p => p.PersonId == id, ct) ||
         await db.PayrollPeriods.AnyAsync(p => p.ClosedById == id, ct) ||
         await db.WorkEvents.AnyAsync(e => e.PersonId == id, ct) ||
+        await db.WorkEventCorrections.AnyAsync(e => e.ActorId == id, ct) ||
         await db.Activities.AnyAsync(a => a.AssigneeId == id, ct) ||
         await db.Crews.AnyAsync(c => c.LeadId == id, ct);
 
@@ -229,6 +292,14 @@ public sealed class PeopleController(NominaDbContext db, UserManager<Person> use
 public sealed record PersonRow(string Id, string FirstName, string LastName, string Document, string UserName, bool IsActive, bool IsAdmin);
 
 public sealed record DeletePerson(string Id, string Name, bool Retain);
+
+public sealed record ContactPage(string Id, string Name, ContactInput Input);
+
+public sealed class ContactInput
+{
+    [Required, StringLength(5020)] public string Addresses { get; set; } = "";
+    [Required, StringLength(820)] public string Phones { get; set; } = "";
+}
 
 public sealed class NewPersonInput : PersonInput
 {

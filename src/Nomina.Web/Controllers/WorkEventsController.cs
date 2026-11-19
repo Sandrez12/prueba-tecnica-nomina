@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ using Nomina.Web.Data;
 
 namespace Nomina.Web.Controllers;
 
-[Authorize(Roles = Roles.Admin + "," + Roles.Lead)]
+[Authorize(Policy = Access.EventsPolicy)]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class WorkEventsController(NominaDbContext db) : Controller
 {
@@ -57,9 +58,101 @@ public sealed class WorkEventsController(NominaDbContext db) : Controller
         return StatusCode(201, new { id = outcome.Id });
     }
 
+    [HttpGet("/novedades/{id:int}/corregir")]
+    public async Task<IActionResult> Edit(int id, CancellationToken ct)
+    {
+        var entry = await FindVisible(id, ct);
+        if (entry is null) return NotFound();
+        return View(await EditPage(entry, new() { Kind = entry.Kind, PreviousKind = entry.Kind }, ct));
+    }
+
+    [HttpPost("/novedades/{id:int}/corregir")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit([FromRoute] int id, CorrectionInput input, CancellationToken ct)
+    {
+        if (ModelState.IsValid)
+        {
+            var result = await Correct(id, input, ct);
+            if (result.Status == 404) return NotFound();
+            if (result.Status == 204)
+            {
+                TempData["WorkEventMessage"] = "Novedad corregida y auditada.";
+                return RedirectToAction(nameof(Index));
+            }
+            ModelState.AddModelError("", result.Message);
+        }
+        var entry = await FindVisible(id, ct);
+        return entry is null ? NotFound() : View(await EditPage(entry, input, ct));
+    }
+
+    [HttpPatch("/api/novedades/{id:int}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CorrectApi([FromRoute] int id, [FromBody] CorrectionInput? input, CancellationToken ct)
+    {
+        if (input is null || !ModelState.IsValid) return BadRequest(new { error = "Tipo anterior, tipo nuevo y motivo válidos son obligatorios." });
+        var result = await Correct(id, input, ct);
+        return result.Status == 204 ? NoContent() : StatusCode(result.Status, new { error = result.Message });
+    }
+
+    private Task<WorkEventRow?> FindVisible(int id, CancellationToken ct) =>
+        (from entry in db.WorkEvents.AsNoTracking()
+         join person in ScopedPeople() on entry.PersonId equals person.Id
+         where entry.Id == id
+         select new WorkEventRow(entry.Id, entry.PersonId, person.FirstName + " " + person.LastName, entry.Date, entry.Kind))
+        .SingleOrDefaultAsync(ct);
+
+    private Task<bool> IsClosed(DateOnly date, CancellationToken ct) =>
+        db.PayrollPeriods.AnyAsync(p => p.Year == date.Year && p.Month == date.Month, ct);
+
+    private async Task<CorrectionPage> EditPage(WorkEventRow entry, CorrectionInput input, CancellationToken ct) =>
+        new(entry, input, await IsClosed(entry.Date, ct), await
+            (from change in db.WorkEventCorrections.AsNoTracking()
+             join actor in db.Users on change.ActorId equals actor.Id
+             where change.WorkEventId == entry.Id
+             orderby change.ChangedAt descending, change.Id descending
+             select new CorrectionRow(actor.FirstName + " " + actor.LastName, change.PreviousKind,
+                 change.NewKind, change.Reason, change.ChangedAt)).ToListAsync(ct));
+
+    private async Task<SaveOutcome> Correct(int id, CorrectionInput input, CancellationToken ct)
+    {
+        var actor = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (actor is null) return new(403, "No tienes permiso para realizar la corrección.");
+        if (!Enum.IsDefined(input.Kind) || !Enum.IsDefined(input.PreviousKind) || input.Kind == input.PreviousKind)
+            return new(400, "Selecciona un tipo diferente al actual.");
+
+        try
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+            var people = ScopedPeople();
+            var entry = await db.WorkEvents.SingleOrDefaultAsync(e => e.Id == id &&
+                people.Any(p => p.Id == e.PersonId), ct);
+            if (entry is null) return new(404, "Novedad no encontrada.");
+            if (await IsClosed(entry.Date, ct)) return new(409, "Ese período ya está cerrado.");
+            if (entry.Kind != input.PreviousKind) return new(409, "La novedad ya cambió. Abre de nuevo el formulario.");
+
+            db.WorkEventCorrections.Add(new()
+            {
+                WorkEventId = entry.Id, ActorId = actor, PreviousKind = entry.Kind,
+                NewKind = input.Kind, Reason = input.Reason.Trim(), ChangedAt = DateTimeOffset.UtcNow
+            });
+            entry.Kind = input.Kind;
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+            return new(204, "");
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 1205 })
+        {
+            return new(409, "Hubo un cambio simultáneo. Abre de nuevo el formulario.");
+        }
+        catch (SqlException ex) when (ex.Number == 1205)
+        {
+            return new(409, "Hubo un cambio simultáneo. Abre de nuevo el formulario.");
+        }
+    }
+
     private IQueryable<Person> ScopedPeople()
     {
-        if (User.IsInRole(Roles.Admin)) return db.Users;
+        if (User.Allows(Access.EventsAll)) return db.Users;
         var actorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (actorId is null) return db.Users.Where(_ => false);
         return db.Users.Where(p => db.Crews.Any(c => c.Id == p.CrewId && c.LeadId == actorId));
@@ -137,3 +230,18 @@ public sealed record WorkPerson(string Id, string Name);
 public sealed record WorkEventRow(int Id, string PersonId, string Name, DateOnly Date, WorkEventKind Kind);
 public sealed record WorkEventsPage(WorkEventInput Input, IReadOnlyList<WorkPerson> People,
     IReadOnlyList<WorkEventRow> Events);
+
+public sealed class CorrectionInput
+{
+    [EnumDataType(typeof(WorkEventKind))]
+    public WorkEventKind PreviousKind { get; set; }
+    [EnumDataType(typeof(WorkEventKind))]
+    public WorkEventKind Kind { get; set; }
+    [Required(ErrorMessage = "Explica el motivo de la corrección."), StringLength(250)]
+    public string Reason { get; set; } = "";
+}
+
+public sealed record CorrectionRow(string Actor, WorkEventKind PreviousKind, WorkEventKind NewKind,
+    string Reason, DateTimeOffset ChangedAt);
+public sealed record CorrectionPage(WorkEventRow Event, CorrectionInput Input, bool Closed,
+    IReadOnlyList<CorrectionRow> History);

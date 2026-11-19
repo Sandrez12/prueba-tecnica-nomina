@@ -1,0 +1,34 @@
+@model Nomina.Web.Controllers.RoleForm
+@using Nomina.Web.Auth
+@{ ViewData["Title"] = Model.Id is null ? "Nuevo rol" : "Editar rol"; }
+<a asp-action="Index" class="d-inline-block mb-3">Volver a roles</a>
+<h1>@ViewData["Title"]</h1>
+<p>La gestión de cuentas, cuadrillas y roles, y el cierre de nómina, se reservan a Administración.</p>
+<form asp-action="Save" asp-route-id="@Model.Id" method="post" class="bg-body border rounded-3 p-3 p-md-4">
+    <div asp-validation-summary="All" class="text-danger" aria-live="polite"></div>
+    <input type="hidden" name="Stamp" value="@Model.Stamp">
+    <div class="mb-4">
+        <label asp-for="Name" class="form-label">Nombre del rol</label>
+        <input asp-for="Name" readonly="@Model.FixedName" class="form-control" maxlength="70" required>
+    </div>
+    <fieldset class="mb-4">
+        <legend class="h5">Permisos operativos</legend>
+        @foreach (var item in Access.Catalog)
+        {
+            <div class="form-check mb-2">
+                <input id="@item.Key" type="checkbox" name="Permissions" class="form-check-input" value="@item.Key"
+                       checked="@Model.Permissions.Contains(item.Key)">
+                <label for="@item.Key" class="form-check-label">@item.Value</label>
+            </div>
+        }
+    </fieldset>
+    <button class="btn btn-primary" type="submit">Guardar rol</button>
+</form>
+@if (Model.Id is not null && !Model.FixedName)
+{
+    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="mt-4">
+        <input type="hidden" name="stamp" value="@Model.Stamp">
+        <p>Solo se puede eliminar un rol sin personas asignadas.</p>
+        <button class="btn btn-outline-danger" type="submit">Eliminar rol</button>
+    </form>
+}

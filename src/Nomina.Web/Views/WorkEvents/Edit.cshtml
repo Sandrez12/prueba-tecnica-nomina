@@ -1,0 +1,52 @@
+@model Nomina.Web.Controllers.CorrectionPage
+@using Nomina.Web.Data
+@{
+    ViewData["Title"] = "Revisar novedad";
+    var kinds = new Dictionary<WorkEventKind, string>
+    {
+        [WorkEventKind.Worked] = "Laborado", [WorkEventKind.Sick] = "Incapacidad",
+        [WorkEventKind.Absent] = "Ausencia", [WorkEventKind.Extra] = "Adicional"
+    };
+}
+<a asp-action="Index" class="d-inline-block mb-3">Volver a novedades</a>
+<h1>Revisar novedad</h1>
+<p>@Model.Event.Name · @Model.Event.Date.ToString("dd/MM/yyyy") · Tipo actual: <strong>@kinds[Model.Event.Kind]</strong></p>
+@if (Model.Closed)
+{
+    <p class="empty-state">La nómina del período ya está cerrada. No se puede corregir esta novedad.</p>
+}
+else
+{
+    <form asp-action="Edit" asp-route-id="@Model.Event.Id" method="post" class="bg-body border rounded-3 p-3 p-md-4">
+        <div asp-validation-summary="All" class="text-danger" aria-live="polite"></div>
+        <input type="hidden" name="PreviousKind" value="@((int)Model.Input.PreviousKind)">
+        <div class="mb-3">
+            <label for="Kind" class="form-label">Nuevo tipo</label>
+            <select id="Kind" name="Kind" class="form-select" required>
+                @foreach (var kind in kinds)
+                {
+                    <option value="@((int)kind.Key)" selected="@(kind.Key == Model.Input.Kind)">@kind.Value</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="Reason" class="form-label">Motivo de la corrección</label>
+            <textarea id="Reason" name="Reason" class="form-control" rows="3" maxlength="250" required>@Model.Input.Reason</textarea>
+        </div>
+        <button class="btn btn-primary" type="submit">Guardar corrección</button>
+    </form>
+}
+@if (Model.History.Count > 0)
+{
+    <h2 class="h5 mt-4">Historial de correcciones</h2>
+    <ul class="list-group">
+        @foreach (var change in Model.History)
+        {
+            <li class="list-group-item">
+                <strong>@kinds[change.PreviousKind] → @kinds[change.NewKind]</strong>
+                <span class="d-block text-body-secondary">@change.Actor · @change.ChangedAt.ToOffset(TimeSpan.FromHours(-5)).ToString("dd/MM/yyyy HH:mm")</span>
+                <span>@change.Reason</span>
+            </li>
+        }
+    </ul>
+}

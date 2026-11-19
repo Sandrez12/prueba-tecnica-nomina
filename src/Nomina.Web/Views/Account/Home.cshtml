@@ -1,21 +1,38 @@
 @using Nomina.Web.Auth
 @{
     ViewData["Title"] = "Inicio";
+    var admin = User.IsInRole(Roles.Admin);
 }
-<h1 class="h3">Sesión iniciada</h1>
-<p>Conectado como <strong>@User.Identity?.Name</strong>.</p>
-@if (User.IsInRole(Roles.Admin))
-{
-    <a asp-controller="People" asp-action="Index" class="btn btn-primary mb-3">Gestionar personas</a>
-}
-@if (User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Lead))
-{
-    <a asp-controller="WorkEvents" asp-action="Index" class="btn btn-outline-primary mb-3">Novedades laborales</a>
-}
-@if (User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Accountant) || User.IsInRole(Roles.Worker))
-{
-    <a asp-controller="Payroll" asp-action="Index" class="btn btn-outline-primary mb-3">Nómina mensual</a>
-}
-<form asp-action="Logout" method="post">
-    <button type="submit" class="btn btn-outline-secondary btn-lg">Cerrar sesión</button>
-</form>
+<section class="workspace-intro">
+    <div class="workspace-copy">
+        <h1>Centro de nómina</h1>
+        <p>Sesión iniciada como <strong>@User.Identity?.Name</strong>. Elige la tarea que quieres realizar.</p>
+    </div>
+    <img src="~/images/chicamocha.svg" alt="" width="760" height="480" class="workspace-art">
+</section>
+<section aria-labelledby="tareas">
+    <h2 class="h5 mb-3" id="tareas">Tareas disponibles</h2>
+    <div class="task-list">
+        @if (admin)
+        {
+            <a asp-controller="People" asp-action="Index" class="task-people">
+                <svg class="task-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3"/><path d="M5 20v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/></svg>
+                <strong>Gestionar personas</strong><span>Alta, edición y estado de las cuentas.</span>
+            </a>
+        }
+        @if (User.Allows(Access.EventsAll, Access.EventsCrew))
+        {
+            <a asp-controller="WorkEvents" asp-action="Index" class="task-events">
+                <svg class="task-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4m8-4v4M4 10h16m-11 5 2 2 4-4"/></svg>
+                <strong>Novedades laborales</strong><span>Registra días laborados, incapacidades, ausencias y adicionales.</span>
+            </a>
+        }
+        @if (User.Allows(Access.PayrollOwn, Access.PayrollRead))
+        {
+            <a asp-controller="Payroll" asp-action="Index" class="task-payroll">
+                <svg class="task-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6m-6 4h6m-6 3h3"/></svg>
+                <strong>Nómina mensual</strong><span>@(admin ? "Revisa el cálculo y cierra el período." : User.Allows(Access.PayrollOwn) ? "Consulta tu estimación y los importes cerrados." : "Consulta los resultados de los períodos cerrados.")</span>
+            </a>
+        }
+    </div>
+</section>

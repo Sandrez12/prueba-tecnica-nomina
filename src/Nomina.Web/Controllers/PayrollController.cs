@@ -6,7 +6,7 @@ using Nomina.Web.Payroll;
 
 namespace Nomina.Web.Controllers;
 
-[Authorize(Roles = Roles.Admin + "," + Roles.Accountant + "," + Roles.Worker)]
+[Authorize(Policy = Access.PayrollPolicy)]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class PayrollController(PayrollService payroll) : Controller
 {
@@ -30,7 +30,7 @@ public sealed class PayrollController(PayrollService payroll) : Controller
         return report is null ? NotFound() : Ok(report);
     }
 
-    [Authorize(Roles = Roles.Admin + "," + Roles.Accountant)]
+    [Authorize(Policy = Access.ExportPolicy)]
     [HttpGet("/nomina/{year:int}/{month:int}/csv")]
     public async Task<IActionResult> Export(int year, int month, CancellationToken ct)
     {
@@ -70,11 +70,18 @@ public sealed class PayrollController(PayrollService payroll) : Controller
 
     private async Task<PayrollReport?> GetReport(int year, int month, CancellationToken ct)
     {
-        var worker = !User.IsInRole(Roles.Admin) && User.IsInRole(Roles.Worker);
-        var personId = worker ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
-        if (worker && personId is null) return null;
-        return await payroll.FindClosed(year, month, personId, ct)
-            ?? (User.IsInRole(Roles.Admin) ? await payroll.Preview(year, month, ct) : null);
+        var global = User.Allows(Access.PayrollRead);
+        var own = User.Allows(Access.PayrollOwn);
+        var personId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!global && personId is null) return null;
+        var closed = await payroll.FindClosed(year, month, global ? null : personId, ct);
+        if (closed is not null) return closed;
+        if (User.IsInRole(Roles.Admin)) return await payroll.Preview(year, month, ct);
+        if (!own || personId is null) return null;
+        var estimate = await payroll.Preview(year, month, ct, onlyPersonId: personId);
+        if (await payroll.IsClosed(year, month, ct))
+            return await payroll.FindClosed(year, month, personId, ct);
+        return estimate.Lines.Count > 0 ? estimate : null;
     }
 
     private static bool ValidInput(PayrollCloseInput input) =>

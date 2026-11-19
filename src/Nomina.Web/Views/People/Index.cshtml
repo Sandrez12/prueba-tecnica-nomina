@@ -13,22 +13,23 @@
 }
 @if (Model.Count == 0)
 {
-    <p>Aún no hay personas registradas.</p>
+    <p class="empty-state">Aún no hay personas registradas. Usa «Nueva persona» para agregar la primera.</p>
 }
 else
 {
-    <div class="table-responsive">
+    <div class="table-responsive data-panel" tabindex="0" role="region" aria-label="Listado de personas">
         <table class="table table-striped align-middle">
             <thead><tr><th scope="col">Nombre</th><th scope="col">Documento</th><th scope="col">Usuario</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
             <tbody>
             @foreach (var person in Model)
             {
                 <tr><td>@person.FirstName @person.LastName</td><td>@person.Document</td><td>@person.UserName</td>
-                    <td>@(person.IsActive ? "Activa" : "Inactiva")</td>
+                    <td><span class="status-label @(person.IsActive ? "status-closed" : "status-neutral")">@(person.IsActive ? "Activa" : "Inactiva")</span></td>
                     <td>
                         @if (!person.IsAdmin)
                         {
                             <a asp-action="Edit" asp-route-id="@person.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <a asp-action="Contacts" asp-route-id="@person.Id" class="btn btn-sm btn-outline-secondary">Contactos</a>
                             <a asp-action="Delete" asp-route-id="@person.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
                         }
                         else { <span>Cuenta protegida</span> }
