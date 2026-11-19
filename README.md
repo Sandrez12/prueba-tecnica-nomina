@@ -6,12 +6,13 @@ Aplicación ASP.NET Core MVC en .NET 10 para registrar novedades y cerrar nómin
 - Alcance y aceptación: [requerimientos](docs/REQUERIMIENTOS.md).
 - Cálculo: [reglas v1](docs/REGLAS-NOMINA.md).
 - [Arquitectura y publicación](docs/ARQUITECTURA.md) · [Decisiones](docs/DECISIONES.md) · [Uso de IA](docs/USO-DE-IA.md).
+- [Guía de sustentación](docs/SUSTENTACION.md) · [Extractos técnicos de IA](docs/ia/EXTRACTOS.md).
 
 ## Alcance de la entrega
 
 - Implementado: login privado, alta y edición de personas, borrado o desactivación según referencias, registro de novedades, vista previa, cierre, consulta histórica y exportación CSV de períodos cerrados.
 - Pendiente: Kanban, CRUD de roles y permisos configurables, interfaz de asignación de cuadrillas y corrección de novedades. El acceso de jefatura requiere una cuadrilla asignada.
-- Verificación: 15 pruebas con `dotnet test`. El flujo principal en Somee fue confirmado por la persona que lo probó con sesión autenticada; la publicación y verificación pública del CSV se realizan por separado.
+- Verificación: 15 pruebas con `dotnet test`. La validación manual en Somee se realizó con sesión autenticada y datos ficticios, según el reporte de la persona que probó la entrega.
 - Horario de la prueba (hora de Colombia, UTC−05:00): la hora real de inicio y fin debe declararse en la entrega; el primer commit documenta el levantamiento, pero no fija el inicio del reloj.
 
 ## Primer arranque

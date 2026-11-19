@@ -11,4 +11,4 @@ Usé OpenCode como asistente de implementación, revisión y diagnóstico. Consu
 
 El asistente ayudó con código y pruebas, pero no recibió contraseñas para configurar el sitio. La aprobación de los supuestos, la operación del panel y la verificación con sesión autenticada quedaron a cargo de la persona que entrega. Para el cierre contrasté el ejemplo documentado con una prueba automatizada y verifiqué los rechazos de acceso tanto en vistas como en API.
 
-La conversación debe revisarse antes de adjuntarla: una captura histórica mostró una contraseña SQL, posteriormente rotada. No publicar esa captura ni exportar credenciales, cookies o cadenas de conexión. Véase [guía de exportación](ia/README.md).
+La evidencia adjunta es una [selección de extractos reales](ia/EXTRACTOS.md), no una exportación íntegra. Se excluyeron capturas y datos privados, incluida una captura histórica de configuración cuya contraseña SQL ya fue rotada.
