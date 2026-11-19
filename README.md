@@ -1,20 +1,28 @@
 # Nómina mensual · Prueba técnica
 
-Aplicación ASP.NET Core MVC en .NET 10. El avance se desarrolla y verifica por bloques; el primer bloque solo comprueba arranque y conexión, no incluye el flujo de nómina.
+Aplicación ASP.NET Core MVC en .NET 10 para registrar novedades y cerrar nóminas mensuales con reglas simplificadas.
 
-- Sitio: `prueba-tecnica-demo.somee.com`.
+- Sitio: [prueba-tecnica-demo.somee.com](https://prueba-tecnica-demo.somee.com/).
 - Alcance y aceptación: [requerimientos](docs/REQUERIMIENTOS.md).
 - Cálculo: [reglas v1](docs/REGLAS-NOMINA.md).
+- [Arquitectura y publicación](docs/ARQUITECTURA.md) · [Decisiones](docs/DECISIONES.md) · [Uso de IA](docs/USO-DE-IA.md).
+
+## Alcance de la entrega
+
+- Implementado: login privado, alta y edición de personas, borrado o desactivación según referencias, registro de novedades, vista previa, cierre, consulta histórica y exportación CSV de períodos cerrados.
+- Pendiente: Kanban, CRUD de roles y permisos configurables, interfaz de asignación de cuadrillas y corrección de novedades. El acceso de jefatura requiere una cuadrilla asignada.
+- Verificación: 15 pruebas con `dotnet test`. El flujo principal en Somee fue confirmado por la persona que lo probó con sesión autenticada; la publicación y verificación pública del CSV se realizan por separado.
+- Horario de la prueba (hora de Colombia, UTC−05:00): la hora real de inicio y fin debe declararse en la entrega; el primer commit documenta el levantamiento, pero no fija el inicio del reloj.
 
 ## Primer arranque
 
 ```sh
-dotnet run --project src/Nomina.Web -- --urls http://localhost:5086
+env ASPNETCORE_ENVIRONMENT=Development dotnet run --project src/Nomina.Web -- --urls http://localhost:5086
 ```
 
 `GET /health` devuelve `200` si la aplicación arranca. `GET /health/db` devuelve `200` si puede abrir una conexión con SQL Server o `503` si falta la configuración o falla la conexión. Este último endpoint no verifica el esquema y no devuelve secretos ni detalles del error.
 
-En local, configurar `ConnectionStrings:Nomina` con ASP.NET Core User Secrets. En IIS, usar una variable de entorno privada `ConnectionStrings__Nomina` en la configuración desplegada. No agregar la cadena a archivos versionados.
+Para usar SQL Server en local, configura `ConnectionStrings:Nomina` con ASP.NET Core User Secrets, inicia con `ASPNETCORE_ENVIRONMENT=Development` y aplica el esquema a una base de desarrollo. En IIS, usa una variable de entorno privada `ConnectionStrings__Nomina` en la configuración desplegada. No agregues la cadena a archivos versionados.
 
 ```sh
 dotnet publish src/Nomina.Web -c Release --no-self-contained -p:UseAppHost=false -o artifacts/publicacion
