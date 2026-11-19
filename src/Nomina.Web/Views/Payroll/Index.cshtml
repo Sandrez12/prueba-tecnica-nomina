@@ -1,5 +1,6 @@
 @model Nomina.Web.Controllers.PayrollPage
 @using System.Globalization
+@using Nomina.Web.Auth
 @{
     ViewData["Title"] = "Nómina mensual";
     var locale = CultureInfo.GetCultureInfo("es-CO");
@@ -29,24 +30,31 @@
 }
 @if (Model.Report is not { } report)
 {
-    <p>No hay una nómina cerrada disponible para este período.</p>
+    <p class="empty-state">No hay una nómina cerrada disponible para este período.</p>
 }
 else
 {
-    <h2 class="h5">@(report.ClosedAt.HasValue ? "Nómina cerrada" : "Vista previa") · @Model.Year-@Model.Month.ToString("00")</h2>
+    <div class="report-heading">
+        <h2 class="h5 mb-0">Detalle de @locale.DateTimeFormat.GetMonthName(Model.Month) de @Model.Year</h2>
+        <span class="status-label @(report.ClosedAt.HasValue ? "status-closed" : "status-draft")">@(report.ClosedAt.HasValue ? "Nómina cerrada" : Model.CanClose ? "Vista previa" : "Estimación provisional")</span>
+    </div>
     <p>Reglas @report.RuleVersion. Todos los importes están en COP; los días laborados normales ya están incluidos en el salario base.</p>
+    @if (!report.ClosedAt.HasValue && !Model.CanClose)
+    {
+        <p class="alert alert-info">El importe es provisional. Puede cambiar cuando se registren novedades o se actualice el salario; no confirma un pago.</p>
+    }
     @if (report.Lines.Count == 0)
     {
-        <p>No hay personas activas para liquidar.</p>
+        <p class="empty-state">No hay personas activas para liquidar.</p>
     }
     else
     {
-        <div class="table-responsive">
+        <div class="table-responsive data-panel" tabindex="0" role="region" aria-label="Detalle de nómina por persona">
             <table class="table table-striped align-middle text-end">
                 <thead><tr>
                     <th scope="col" class="text-start">Persona</th><th scope="col">Base</th><th scope="col">Laborados</th>
                     <th scope="col">Ausencias</th><th scope="col">Incapacidades</th><th scope="col">Adicionales</th>
-                    <th scope="col">Ajuste mínimo</th><th scope="col">Total</th>
+                    <th scope="col">Ajuste mínimo</th><th scope="col" class="total-cell">Total</th>
                 </tr></thead>
                 <tbody>
                 @foreach (var line in report.Lines)
@@ -57,7 +65,7 @@ else
                         <td>@Cop(line.AbsenceAdjustment)<span class="d-block text-body-secondary">@line.AbsentDays d</span></td>
                         <td>@Cop(line.SicknessAdjustment)<span class="d-block text-body-secondary">@line.SickDays d</span></td>
                         <td>@Cop(line.ExtraAdjustment)<span class="d-block text-body-secondary">@line.ExtraDays d</span></td>
-                        <td>@Cop(line.MinimumAdjustment)</td><td class="fw-semibold">@Cop(line.Total)</td>
+                        <td>@Cop(line.MinimumAdjustment)</td><td class="total-cell fw-semibold">@Cop(line.Total)</td>
                     </tr>
                 }
                 </tbody>
@@ -74,7 +82,7 @@ else
                 <button class="btn btn-primary" type="submit">Cerrar nómina del período</button>
             </form>
         }
-        @if (report.ClosedAt.HasValue && (Model.CanClose || User.IsInRole(Nomina.Web.Auth.Roles.Accountant)))
+        @if (report.ClosedAt.HasValue && User.CanExport())
         {
             <a asp-action="Export" asp-route-year="@report.Year" asp-route-month="@report.Month"
                class="btn btn-outline-primary">Descargar nómina CSV</a>

@@ -496,6 +496,44 @@ namespace Nomina.Web.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Nomina.Web.Data.WorkEventCorrection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActorId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("NewKind")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PreviousKind")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<int>("WorkEventId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("WorkEventId");
+
+                    b.ToTable("WorkEventCorrections");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -620,6 +658,21 @@ namespace Nomina.Web.Data.Migrations
                     b.HasOne("Nomina.Web.Data.Person", null)
                         .WithMany()
                         .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nomina.Web.Data.WorkEventCorrection", b =>
+                {
+                    b.HasOne("Nomina.Web.Data.Person", null)
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Nomina.Web.Data.WorkEvent", null)
+                        .WithMany()
+                        .HasForeignKey("WorkEventId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
                 });

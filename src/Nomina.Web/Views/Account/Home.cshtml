@@ -20,18 +20,18 @@
                 <strong>Gestionar personas</strong><span>Alta, edición y estado de las cuentas.</span>
             </a>
         }
-        @if (admin || User.IsInRole(Roles.Lead))
+        @if (User.Allows(Access.EventsAll, Access.EventsCrew))
         {
             <a asp-controller="WorkEvents" asp-action="Index" class="task-events">
                 <svg class="task-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4m8-4v4M4 10h16m-11 5 2 2 4-4"/></svg>
                 <strong>Novedades laborales</strong><span>Registra días laborados, incapacidades, ausencias y adicionales.</span>
             </a>
         }
-        @if (admin || User.IsInRole(Roles.Accountant) || User.IsInRole(Roles.Worker))
+        @if (User.Allows(Access.PayrollOwn, Access.PayrollRead))
         {
             <a asp-controller="Payroll" asp-action="Index" class="task-payroll">
                 <svg class="task-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6m-6 4h6m-6 3h3"/></svg>
-                <strong>Nómina mensual</strong><span>@(admin ? "Revisa el cálculo y cierra el período." : "Consulta los resultados de los períodos cerrados.")</span>
+                <strong>Nómina mensual</strong><span>@(admin ? "Revisa el cálculo y cierra el período." : User.Allows(Access.PayrollOwn) ? "Consulta tu estimación y los importes cerrados." : "Consulta los resultados de los períodos cerrados.")</span>
             </a>
         }
     </div>

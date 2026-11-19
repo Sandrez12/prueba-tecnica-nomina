@@ -55,6 +55,17 @@ public sealed class WorkEvent
     public WorkEventKind Kind { get; set; }
 }
 
+public sealed class WorkEventCorrection
+{
+    public int Id { get; set; }
+    public int WorkEventId { get; set; }
+    public string ActorId { get; set; } = "";
+    public WorkEventKind PreviousKind { get; set; }
+    public WorkEventKind NewKind { get; set; }
+    public string Reason { get; set; } = "";
+    public DateTimeOffset ChangedAt { get; set; }
+}
+
 public sealed class PayrollPeriod
 {
     public int Id { get; set; }

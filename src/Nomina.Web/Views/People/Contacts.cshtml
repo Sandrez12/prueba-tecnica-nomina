@@ -1,0 +1,17 @@
+@model Nomina.Web.Controllers.ContactPage
+@{
+    ViewData["Title"] = "Direcciones y teléfonos";
+}
+<a asp-action="Index" class="d-inline-block mb-3">Volver a personas</a>
+<h1>Direcciones y teléfonos</h1>
+<p>Actualiza los contactos de <strong>@Model.Name</strong>. Escribe un contacto por línea; debe quedar al menos una dirección y un teléfono.</p>
+<form asp-action="Contacts" asp-route-id="@Model.Id" method="post" class="bg-body border rounded-3 p-3 p-md-4">
+    <div asp-validation-summary="All" class="text-danger" aria-live="polite"></div>
+    <div class="row g-3 mb-3">
+        <div class="col-md-6"><label for="Addresses" class="form-label">Direcciones</label>
+            <textarea id="Addresses" name="Addresses" rows="6" maxlength="5020" class="form-control" required>@Model.Input.Addresses</textarea></div>
+        <div class="col-md-6"><label for="Phones" class="form-label">Teléfonos</label>
+            <textarea id="Phones" name="Phones" rows="6" maxlength="820" class="form-control" required>@Model.Input.Phones</textarea></div>
+    </div>
+    <button class="btn btn-primary" type="submit">Guardar contactos</button>
+</form>

@@ -39,6 +39,12 @@ public sealed class AccessTests(WebApplicationFactory<Program> factory)
     [InlineData("/personas/demo-id/eliminar")]
     [InlineData("/novedades")]
     [InlineData("/api/novedades")]
+    [InlineData("/cuadrillas/nueva")]
+    [InlineData("/cuadrillas/1/editar")]
+    [InlineData("/novedades/1/corregir")]
+    [InlineData("/personas/demo-id/contactos")]
+    [InlineData("/roles/nuevo")]
+    [InlineData("/roles/demo-id/editar")]
     public async Task WorkerCannotOpenOrSubmitProtectedRoutes(string path)
     {
         using var app = factory.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
@@ -55,6 +61,44 @@ public sealed class AccessTests(WebApplicationFactory<Program> factory)
         using var post = await client.PostAsync(path, form);
         Assert.Equal(HttpStatusCode.Forbidden, get.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, post.StatusCode);
+    }
+
+    [Fact]
+    public async Task WorkerCannotManageActivities()
+    {
+        using var app = factory.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = "Test";
+                options.DefaultForbidScheme = "Test";
+            }).AddScheme<AuthenticationSchemeOptions, TestRoleHandler>("Test", _ => { })));
+        using var client = CreateClient(app);
+        client.DefaultRequestHeaders.Add("X-Test-Role", Roles.Worker);
+        using var get = await client.GetAsync("/actividades/1/editar");
+        using var form = new FormUrlEncodedContent([]);
+        using var post = await client.PostAsync("/actividades/guardar", form);
+        Assert.Equal(HttpStatusCode.Forbidden, get.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, post.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(Roles.Worker, HttpStatusCode.Forbidden)]
+    [InlineData(Roles.Lead, HttpStatusCode.BadRequest)]
+    [InlineData(Roles.Admin, HttpStatusCode.BadRequest)]
+    public async Task CorrectionApiChecksRoleAndAntiforgery(string role, HttpStatusCode expected)
+    {
+        using var app = factory.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = "Test";
+                    options.DefaultForbidScheme = "Test";
+                })
+                .AddScheme<AuthenticationSchemeOptions, TestRoleHandler>("Test", _ => { })));
+        using var client = CreateClient(app);
+        client.DefaultRequestHeaders.Add("X-Test-Role", role);
+        using var body = new StringContent("{}", System.Text.Encoding.UTF8, "application/json");
+        using var response = await client.PatchAsync("/api/novedades/1", body);
+        Assert.Equal(expected, response.StatusCode);
     }
 
     [Fact]
@@ -77,6 +121,24 @@ public sealed class AccessTests(WebApplicationFactory<Program> factory)
         Assert.Equal(HttpStatusCode.Forbidden, browser.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, json.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, csv.StatusCode);
+    }
+
+    [Fact]
+    public async Task HomeShowsOnlyNavigationForTheSignedInRole()
+    {
+        using var app = factory.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+            services.AddAuthentication(options => options.DefaultAuthenticateScheme = "Test")
+                .AddScheme<AuthenticationSchemeOptions, TestRoleHandler>("Test", _ => { })));
+        using var client = CreateClient(app);
+        client.DefaultRequestHeaders.Add("X-Test-Role", Roles.Worker);
+        using var response = await client.GetAsync("/cuenta/inicio");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("href=\"/nomina\"", html);
+        Assert.Contains("action=\"/cuenta/salir\"", html);
+        Assert.Contains("__RequestVerificationToken", html);
+        Assert.DoesNotContain("href=\"/novedades\"", html);
+        Assert.DoesNotContain("href=\"/personas\"", html);
     }
 
     [Fact]

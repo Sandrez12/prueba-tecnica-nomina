@@ -8,11 +8,17 @@ Aplicación ASP.NET Core MVC en .NET 10 para registrar novedades y cerrar nómin
 - [Arquitectura y publicación](docs/ARQUITECTURA.md) · [Decisiones](docs/DECISIONES.md) · [Uso de IA](docs/USO-DE-IA.md).
 - [Guía de sustentación](docs/SUSTENTACION.md) · [Extractos técnicos de IA](docs/ia/EXTRACTOS.md).
 
-## Alcance de la entrega
+## Alcance de la entrega original
+
+La etiqueta [`entrega-prueba-tecnica`](../../tree/entrega-prueba-tecnica) identifica la versión evaluada (`11016b2`).
 
 - Implementado: login privado, alta y edición de personas, borrado o desactivación según referencias, registro de novedades, vista previa, cierre, consulta histórica y exportación CSV de períodos cerrados.
 - Pendiente: Kanban, CRUD de roles y permisos configurables, interfaz de asignación de cuadrillas y corrección de novedades. El acceso de jefatura requiere una cuadrilla asignada.
 - Verificación: 15 pruebas con `dotnet test`. La validación manual en Somee se realizó con sesión autenticada y datos ficticios, según el reporte de la persona que probó la entrega.
+
+## Versión posterior
+
+Incluye roles configurables, gestión de cuadrillas, correcciones auditadas, múltiples contactos, estimaciones para trabajadores y tablero de actividades. El [registro de la versión](docs/VERSION-POSTERIOR.md) describe la prueba con SQL Server y los pasos de actualización de Somee.
 
 ## Horario de la prueba
 

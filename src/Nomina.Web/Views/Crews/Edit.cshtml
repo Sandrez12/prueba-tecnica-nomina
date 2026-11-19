@@ -1,0 +1,50 @@
+@model Nomina.Web.Controllers.CrewPage
+@{
+    ViewData["Title"] = Model.Id is null ? "Nueva cuadrilla" : "Editar cuadrilla";
+}
+<a asp-action="Index" class="d-inline-block mb-3">Volver a cuadrillas</a>
+<h1>@ViewData["Title"]</h1>
+@if (Model.Leads.Count == 0)
+{
+    <p class="empty-state">Primero debes crear una cuenta activa con permiso de cuadrilla. <a asp-controller="People" asp-action="Create">Crear persona</a>.</p>
+}
+else
+{
+    <form asp-action="Save" asp-route-id="@Model.Id" method="post" class="bg-body border rounded-3 p-3 p-md-4">
+        <div asp-validation-summary="All" class="text-danger" aria-live="polite"></div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label for="Name" class="form-label">Nombre de la cuadrilla</label>
+                <input id="Name" name="Name" value="@Model.Input.Name" class="form-control" maxlength="100" required>
+            </div>
+            <div class="col-md-6">
+                <label for="LeadId" class="form-label">Jefatura</label>
+                <select id="LeadId" name="LeadId" class="form-select" required>
+                    <option value="">Selecciona una cuenta activa</option>
+                    @foreach (var lead in Model.Leads)
+                    {
+                        <option value="@lead.Id" selected="@(lead.Id == Model.Input.LeadId)">@lead.Name · @lead.Document</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <fieldset class="mb-4">
+            <legend class="h5">Integrantes</legend>
+            <p class="text-body-secondary">Para trasladar una persona, retírala primero de la cuadrilla original.</p>
+            @if (Model.Members.Count == 0)
+            {
+                <p>No hay integrantes disponibles.</p>
+            }
+            @for (var i = 0; i < Model.Members.Count; i++)
+            {
+                var member = Model.Members[i];
+                <div class="form-check mb-2">
+                    <input id="member-@i" name="MemberIds" class="form-check-input" type="checkbox" value="@member.Id"
+                           checked="@Model.Input.MemberIds.Contains(member.Id)">
+                    <label for="member-@i" class="form-check-label">@member.Name · @member.Document @(!member.Active ? "(inactiva)" : "")</label>
+                </div>
+            }
+        </fieldset>
+        <button class="btn btn-primary" type="submit">Guardar cuadrilla</button>
+    </form>
+}

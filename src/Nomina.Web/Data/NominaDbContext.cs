@@ -10,6 +10,7 @@ public sealed class NominaDbContext(DbContextOptions<NominaDbContext> options)
     public DbSet<Crew> Crews => Set<Crew>();
     public DbSet<TeamActivity> Activities => Set<TeamActivity>();
     public DbSet<WorkEvent> WorkEvents => Set<WorkEvent>();
+    public DbSet<WorkEventCorrection> WorkEventCorrections => Set<WorkEventCorrection>();
     public DbSet<PayrollPeriod> PayrollPeriods => Set<PayrollPeriod>();
     public DbSet<PayrollLine> PayrollLines => Set<PayrollLine>();
 
@@ -61,6 +62,13 @@ public sealed class NominaDbContext(DbContextOptions<NominaDbContext> options)
             b.ToTable(t => t.HasCheckConstraint("CK_WorkEvent_Kind", "[Kind] IN (1, 2, 3, 4)"));
             b.HasIndex(x => new { x.PersonId, x.Date }).IsUnique();
             b.HasOne<Person>().WithMany().HasForeignKey(x => x.PersonId).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        model.Entity<WorkEventCorrection>(b =>
+        {
+            b.Property(x => x.Reason).HasMaxLength(250);
+            b.HasOne<WorkEvent>().WithMany().HasForeignKey(x => x.WorkEventId).OnDelete(DeleteBehavior.NoAction);
+            b.HasOne<Person>().WithMany().HasForeignKey(x => x.ActorId).OnDelete(DeleteBehavior.NoAction);
         });
 
         model.Entity<PayrollPeriod>(b =>

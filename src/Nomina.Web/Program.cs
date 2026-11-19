@@ -13,6 +13,7 @@ builder.Services.AddIdentity<Person, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 12;
 }).AddEntityFrameworkStores<NominaDbContext>();
+builder.Services.AddAuthorization(Access.Register);
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/cuenta/ingresar";

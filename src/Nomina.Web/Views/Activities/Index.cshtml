@@ -1,0 +1,82 @@
+@model Nomina.Web.Controllers.ActivityBoard
+@using Nomina.Web.Data
+@{
+    ViewData["Title"] = "Actividades";
+    var columns = new (ActivityStatus Value, string Label, string Style)[]
+    {
+        (ActivityStatus.Pending, "Pendiente", "status-neutral"),
+        (ActivityStatus.InProgress, "En proceso", "status-draft"),
+        (ActivityStatus.Finished, "Terminada", "status-closed")
+    };
+}
+<h1>Actividades</h1>
+<p class="text-body-secondary">Consulta qué está haciendo cada persona. El tablero no modifica la nómina.</p>
+@if (Model.CanManage)
+{
+    <form asp-action="Save" method="post" class="bg-body border rounded-3 p-3 p-md-4 mb-4">
+        <h2 class="h5">@(Model.Input.Id == 0 ? "Nueva actividad" : "Editar actividad")</h2>
+        <div asp-validation-summary="All" class="text-danger" aria-live="polite"></div>
+        <input type="hidden" name="Id" value="@Model.Input.Id">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label for="Title" class="form-label">Actividad</label>
+                <input id="Title" name="Title" class="form-control" value="@Model.Input.Title" maxlength="200" required>
+            </div>
+            <div class="col-md-4">
+                <label for="AssigneeId" class="form-label">Responsable</label>
+                <select id="AssigneeId" name="AssigneeId" class="form-select" required>
+                    <option value="">Selecciona una persona</option>
+                    @foreach (var option in Model.People)
+                    {
+                        <option value="@option.Id" selected="@(option.Id == Model.Input.AssigneeId)">@option.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary" type="submit">Guardar actividad</button>
+            </div>
+        </div>
+        @if (Model.Input.Id != 0)
+        {
+            <div class="d-flex flex-wrap gap-3 mt-3">
+                <a asp-action="Index">Cancelar edición</a>
+                <button type="submit" formaction="@Url.Action("Delete", new { id = Model.Input.Id })" formnovalidate class="btn btn-sm btn-outline-danger">Eliminar actividad</button>
+            </div>
+        }
+    </form>
+}
+<div class="row g-3">
+    @foreach (var column in columns)
+    {
+        var cards = Model.Rows.Where(a => a.Status == column.Value).ToList();
+        <section class="col-lg-4" aria-labelledby="estado-@((int)column.Value)">
+            <div class="data-panel p-3 h-100">
+                <h2 id="estado-@((int)column.Value)" class="h5"><span class="status-label @column.Style">@column.Label · @cards.Count</span></h2>
+                @if (cards.Count == 0) { <p class="text-body-secondary mb-0">Sin actividades en este estado.</p> }
+                @foreach (var card in cards)
+                {
+                    <article class="border-top pt-3 mt-3">
+                        <h3 class="h6 text-break">@card.Title</h3>
+                        <p class="text-body-secondary small">Responsable: @card.Assignee</p>
+                        <form asp-action="Move" asp-route-id="@card.Id" method="post" class="d-flex flex-wrap gap-2 align-items-end">
+                            <div class="flex-grow-1">
+                                <label for="move-@card.Id" class="form-label small">Cambiar estado</label>
+                                <select id="move-@card.Id" name="next" class="form-select">
+                                    @foreach (var option in columns)
+                                    {
+                                        <option value="@((int)option.Value)" selected="@(option.Value == card.Status)">@option.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Mover</button>
+                        </form>
+                        @if (Model.CanManage)
+                        {
+                            <a asp-action="Edit" asp-route-id="@card.Id" class="d-inline-block mt-2">Editar actividad</a>
+                        }
+                    </article>
+                }
+            </div>
+        </section>
+    }
+</div>

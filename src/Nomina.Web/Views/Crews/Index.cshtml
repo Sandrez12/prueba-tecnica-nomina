@@ -1,0 +1,31 @@
+@model IReadOnlyList<Nomina.Web.Controllers.CrewRow>
+@{
+    ViewData["Title"] = "Cuadrillas";
+}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <div><h1>Cuadrillas</h1><p class="mb-0 text-body-secondary">Asigna quién registra novedades para cada equipo.</p></div>
+    <a asp-action="Create" class="btn btn-primary">Nueva cuadrilla</a>
+</div>
+@if (TempData["CrewMessage"] is string message)
+{
+    <p class="alert alert-success" role="status">@message</p>
+}
+@if (Model.Count == 0)
+{
+    <p class="empty-state">No hay cuadrillas. Crea una cuenta activa de Jefatura y asígnale su equipo.</p>
+}
+else
+{
+    <div class="table-responsive data-panel" tabindex="0" role="region" aria-label="Listado de cuadrillas">
+        <table class="table align-middle">
+            <thead><tr><th scope="col">Cuadrilla</th><th scope="col">Jefatura</th><th scope="col">Integrantes</th><th scope="col">Acciones</th></tr></thead>
+            <tbody>
+            @foreach (var crew in Model)
+            {
+                <tr><th scope="row">@crew.Name</th><td>@crew.Lead</td><td>@crew.Members</td>
+                <td><a asp-action="Edit" asp-route-id="@crew.Id" class="btn btn-sm btn-outline-primary" aria-label="Editar @crew.Name">Editar</a></td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

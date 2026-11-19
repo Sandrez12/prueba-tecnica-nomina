@@ -1,0 +1,24 @@
+@model IReadOnlyList<Nomina.Web.Controllers.RoleRow>
+@using Nomina.Web.Auth
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <div><h1>Roles y permisos</h1><p class="mb-0 text-body-secondary">Configura el acceso de cada equipo.</p></div>
+    <a asp-action="Create" class="btn btn-primary">Nuevo rol</a>
+</div>
+@if (TempData["RoleMessage"] is string message)
+{
+    <p class="alert alert-success" role="status">@message</p>
+}
+<div class="table-responsive data-panel" tabindex="0" role="region" aria-label="Roles y permisos">
+    <table class="table align-middle">
+        <thead><tr><th scope="col">Rol</th><th scope="col">Personas asignadas</th><th scope="col">Acciones</th></tr></thead>
+        <tbody>
+        @foreach (var role in Model)
+        {
+            <tr><th scope="row">@role.Name</th><td>@role.AssignedCount</td><td>
+                @if (role.Name == Roles.Admin) { <span>Rol protegido</span> }
+                else { <a asp-action="Edit" asp-route-id="@role.Id" class="btn btn-sm btn-outline-primary">Editar permisos</a> }
+            </td></tr>
+        }
+        </tbody>
+    </table>
+</div>

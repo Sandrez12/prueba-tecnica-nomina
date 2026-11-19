@@ -8,6 +8,9 @@ namespace Nomina.Web.Payroll;
 
 public sealed class PayrollService(NominaDbContext db)
 {
+    public Task<bool> IsClosed(int year, int month, CancellationToken ct) =>
+        db.PayrollPeriods.AnyAsync(p => p.Year == year && p.Month == month, ct);
+
     public async Task<PayrollReport?> FindClosed(int year, int month, string? onlyPersonId, CancellationToken ct)
     {
         var period = await db.PayrollPeriods.AsNoTracking()
@@ -18,11 +21,12 @@ public sealed class PayrollService(NominaDbContext db)
             Sorted(period.Lines), onlyPersonId is null ? period.Total : period.Lines.Sum(l => l.Total));
     }
 
-    public async Task<PayrollReport> Preview(int year, int month, CancellationToken ct)
+    public async Task<PayrollReport> Preview(int year, int month, CancellationToken ct, string? onlyPersonId = null)
     {
         var start = new DateOnly(year, month, 1);
         var end = start.AddMonths(1);
         var eligible = db.Users.AsNoTracking().Where(p => p.IsActive &&
+            (onlyPersonId == null || p.Id == onlyPersonId) &&
             !(from link in db.UserRoles
               join role in db.Roles on link.RoleId equals role.Id
               where link.UserId == p.Id && role.Name == Roles.Admin
@@ -36,7 +40,8 @@ public sealed class PayrollService(NominaDbContext db)
         var byPerson = events.ToLookup(e => e.PersonId);
         var lines = Sorted(people.Select(p => PayrollCalculator.Calculate(p, byPerson[p.Id].Select(e => e.Kind))));
         return new(year, month, null, PayrollCalculator.RuleVersion, PayrollCalculator.RuleParameters,
-            PayrollCalculator.Revision(year, month, people, events), lines, lines.Sum(l => l.Total));
+            onlyPersonId is null ? PayrollCalculator.Revision(year, month, people, events) : null,
+            lines, lines.Sum(l => l.Total));
     }
 
     public async Task<CloseOutcome> Close(int year, int month, string revision, string actorId, CancellationToken ct)
