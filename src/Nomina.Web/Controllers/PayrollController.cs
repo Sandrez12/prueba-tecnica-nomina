@@ -30,6 +30,16 @@ public sealed class PayrollController(PayrollService payroll) : Controller
         return report is null ? NotFound() : Ok(report);
     }
 
+    [Authorize(Roles = Roles.Admin + "," + Roles.Accountant)]
+    [HttpGet("/nomina/{year:int}/{month:int}/csv")]
+    public async Task<IActionResult> Export(int year, int month, CancellationToken ct)
+    {
+        if (!ValidPeriod(year, month)) return BadRequest("Período no válido.");
+        var report = await payroll.FindClosed(year, month, null, ct);
+        return report is null ? NotFound() : File(PayrollCsv.Write(report), "text/csv; charset=utf-8",
+            FormattableString.Invariant($"nomina-{year:D4}-{month:D2}.csv"));
+    }
+
     [Authorize(Roles = Roles.Admin)]
     [HttpPost("/nomina/cerrar")]
     [ValidateAntiForgeryToken]

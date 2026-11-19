@@ -74,5 +74,10 @@ else
                 <button class="btn btn-primary" type="submit">Cerrar nómina del período</button>
             </form>
         }
+        @if (report.ClosedAt.HasValue && (Model.CanClose || User.IsInRole(Nomina.Web.Auth.Roles.Accountant)))
+        {
+            <a asp-action="Export" asp-route-year="@report.Year" asp-route-month="@report.Month"
+               class="btn btn-outline-primary">Descargar nómina CSV</a>
+        }
     }
 }

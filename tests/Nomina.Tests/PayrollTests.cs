@@ -9,6 +9,20 @@ public sealed class PayrollTests
     private static readonly PayrollPerson Person = new("demo", "Persona ficticia", "DEMO-01", 1_500_000);
 
     [Fact]
+    public void CsvKeepsConceptsAndTotalAndNeutralizesFormulaText()
+    {
+        var line = PayrollCalculator.Calculate(Person with { Name = "  =SUM(1;2)", Document = "A\"B" },
+            [WorkEventKind.Absent]);
+        var report = new PayrollReport(2026, 11, DateTimeOffset.UtcNow, "v1", "", null, [line], line.Total);
+        var csv = System.Text.Encoding.UTF8.GetString(PayrollCsv.Write(report));
+        Assert.StartsWith("\uFEFFPeriodo;", csv);
+        Assert.Contains("\"A\"\"B\";\"'  =SUM(1;2)\"", csv);
+        Assert.Contains(";1;-50000;", csv);
+        Assert.EndsWith("2026-11;;TOTAL DEL PERÍODO;;;;;;;;;;1450000\r\n", csv);
+        Assert.Equal(13, csv.Split("\r\n")[2].Split(';').Length);
+    }
+
+    [Fact]
     public void AppliesDocumentedExample()
     {
         var line = PayrollCalculator.Calculate(Person,

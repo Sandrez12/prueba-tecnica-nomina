@@ -62,3 +62,4 @@ Como administrador, abre **Nómina mensual**, consulta el mes y revisa los conce
 | --- | --- |
 | `GET /api/nomina/{year}/{month}` | Devuelve la vista previa a administración si el mes está abierto, o el histórico según el rol. Devuelve `404` si no hay reporte visible. |
 | `POST /api/nomina/cerrar` | Solo administración. Con la sesión y el token de `GET /api/novedades/token`, envía `year`, `month` y `revision` de la vista previa. Devuelve `200` con el histórico o `409` si cambió, está vacío o ya se cerró. |
+| `GET /nomina/{year}/{month}/csv` | Administración y contabilidad pueden descargar el CSV detallado de un mes cerrado; `404` si el período no está cerrado. |

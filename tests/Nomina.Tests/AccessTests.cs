@@ -73,8 +73,10 @@ public sealed class AccessTests(WebApplicationFactory<Program> factory)
         using var api = new StringContent("{}", System.Text.Encoding.UTF8, "application/json");
         using var browser = await client.PostAsync("/nomina/cerrar", form);
         using var json = await client.PostAsync("/api/nomina/cerrar", api);
+        using var csv = await client.GetAsync("/nomina/2026/11/csv");
         Assert.Equal(HttpStatusCode.Forbidden, browser.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, json.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, csv.StatusCode);
     }
 
     [Fact]
