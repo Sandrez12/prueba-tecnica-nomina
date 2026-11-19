@@ -13,7 +13,18 @@ Aplicación ASP.NET Core MVC en .NET 10 para registrar novedades y cerrar nómin
 - Implementado: login privado, alta y edición de personas, borrado o desactivación según referencias, registro de novedades, vista previa, cierre, consulta histórica y exportación CSV de períodos cerrados.
 - Pendiente: Kanban, CRUD de roles y permisos configurables, interfaz de asignación de cuadrillas y corrección de novedades. El acceso de jefatura requiere una cuadrilla asignada.
 - Verificación: 15 pruebas con `dotnet test`. La validación manual en Somee se realizó con sesión autenticada y datos ficticios, según el reporte de la persona que probó la entrega.
-- Horario de la prueba (hora de Colombia, UTC−05:00): la hora real de inicio y fin debe declararse en la entrega; el primer commit documenta el levantamiento, pero no fija el inicio del reloj.
+
+## Horario de la prueba
+
+19 de noviembre de 2026, hora de Colombia (UTC−05:00):
+
+| Hito | Hora |
+| --- | --- |
+| Primer mensaje sobre los requisitos previos | 11:57:10 |
+| Inicio de la prueba: recepción del enunciado en la sesión de trabajo | 12:23:43 |
+| Fin del trabajo técnico y de la preparación de la sustentación | 14:26:11 |
+
+La carga a GitHub y el registro de estas horas se hicieron después del cierre técnico, sin modificar la aplicación ni el despliegue.
 
 ## Primer arranque
 
