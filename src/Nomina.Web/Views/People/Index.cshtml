@@ -19,12 +19,20 @@ else
 {
     <div class="table-responsive">
         <table class="table table-striped align-middle">
-            <thead><tr><th scope="col">Nombre</th><th scope="col">Documento</th><th scope="col">Usuario</th><th scope="col">Estado</th></tr></thead>
+            <thead><tr><th scope="col">Nombre</th><th scope="col">Documento</th><th scope="col">Usuario</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
             <tbody>
             @foreach (var person in Model)
             {
                 <tr><td>@person.FirstName @person.LastName</td><td>@person.Document</td><td>@person.UserName</td>
-                    <td>@(person.IsActive ? "Activa" : "Inactiva")</td></tr>
+                    <td>@(person.IsActive ? "Activa" : "Inactiva")</td>
+                    <td>
+                        @if (!person.IsAdmin)
+                        {
+                            <a asp-action="Edit" asp-route-id="@person.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <a asp-action="Delete" asp-route-id="@person.Id" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                        }
+                        else { <span>Cuenta protegida</span> }
+                    </td></tr>
             }
             </tbody>
         </table>

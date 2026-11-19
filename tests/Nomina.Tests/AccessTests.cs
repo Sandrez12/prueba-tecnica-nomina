@@ -33,8 +33,11 @@ public sealed class AccessTests(WebApplicationFactory<Program> factory)
         Assert.Equal(expected, response.StatusCode);
     }
 
-    [Fact]
-    public async Task WorkerCannotOpenOrSubmitPersonCreationForm()
+    [Theory]
+    [InlineData("/personas/nueva")]
+    [InlineData("/personas/demo-id/editar")]
+    [InlineData("/personas/demo-id/eliminar")]
+    public async Task WorkerCannotOpenOrSubmitProtectedRoutes(string path)
     {
         using var app = factory.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
             services.AddAuthentication(options =>
@@ -46,8 +49,8 @@ public sealed class AccessTests(WebApplicationFactory<Program> factory)
         using var client = CreateClient(app);
         client.DefaultRequestHeaders.Add("X-Test-Role", Roles.Worker);
         using var form = new FormUrlEncodedContent([]);
-        using var get = await client.GetAsync("/personas/nueva");
-        using var post = await client.PostAsync("/personas/nueva", form);
+        using var get = await client.GetAsync(path);
+        using var post = await client.PostAsync(path, form);
         Assert.Equal(HttpStatusCode.Forbidden, get.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, post.StatusCode);
     }

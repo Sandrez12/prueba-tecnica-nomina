@@ -24,6 +24,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 builder.Services.AddAntiforgery(options => options.Cookie.SecurePolicy =
     builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always);
+builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
 builder.Services.AddHttpsRedirection(options => options.HttpsPort = 443);
 
 var app = builder.Build();

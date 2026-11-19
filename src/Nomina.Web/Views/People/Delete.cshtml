@@ -1,0 +1,17 @@
+@model Nomina.Web.Controllers.DeletePerson
+@{
+    ViewData["Title"] = "Confirmar eliminación";
+}
+<h1 class="h3">Retirar a @Model.Name</h1>
+@if (Model.Retain)
+{
+    <p>Esta persona tiene registros vinculados. Su cuenta se desactivará y los registros se conservarán.</p>
+}
+else
+{
+    <p>Si sigue sin tener registros vinculados, se eliminarán la cuenta y sus datos de contacto. Esta acción no se puede deshacer.</p>
+}
+<form asp-action="ConfirmDelete" asp-route-id="@Model.Id" method="post" class="d-flex flex-wrap gap-2">
+    <button class="btn btn-danger" type="submit">@(Model.Retain ? "Desactivar cuenta" : "Eliminar persona")</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+</form>
