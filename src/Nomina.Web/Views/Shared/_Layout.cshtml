@@ -1,3 +1,9 @@
+@using Nomina.Web.Auth
+@{
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var admin = User.IsInRole(Roles.Admin);
+    var section = ViewContext.RouteData.Values["controller"] as string;
+}
 <!doctype html>
 <html lang="es">
 <head>
@@ -6,12 +12,43 @@
     <title>@ViewData["Title"] · Nómina</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
           integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="~/css/nomina.css" asp-append-version="true">
 </head>
-<body class="bg-body-tertiary">
-    <header class="border-bottom bg-body py-3">
-        <div class="container fw-semibold">Nómina · Prueba técnica</div>
+<body>
+    <a href="#contenido" class="visually-hidden-focusable skip-link">Saltar al contenido</a>
+    <header class="app-header">
+        <div class="app-container app-header-inner">
+            <a asp-controller="Account" asp-action="@(signedIn ? "Home" : "Login")" class="app-brand">
+                <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" focusable="false">
+                    <rect width="34" height="34" rx="9" fill="#bde5d0"/>
+                    <path d="M11 10h12v14H11zM14 14h6m-6 4h6m-6 3h3" fill="none" stroke="#173d31" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Nómina Chicamocha
+            </a>
+            @if (signedIn)
+            {
+                <nav class="app-nav" aria-label="Navegación principal">
+                    <a asp-controller="Account" asp-action="Home" aria-current="@(section == "Account" ? "page" : null)">Inicio</a>
+                    @if (admin)
+                    {
+                        <a asp-controller="People" asp-action="Index" aria-current="@(section == "People" ? "page" : null)">Personas</a>
+                    }
+                    @if (admin || User.IsInRole(Roles.Lead))
+                    {
+                        <a asp-controller="WorkEvents" asp-action="Index" aria-current="@(section == "WorkEvents" ? "page" : null)">Novedades</a>
+                    }
+                    @if (admin || User.IsInRole(Roles.Accountant) || User.IsInRole(Roles.Worker))
+                    {
+                        <a asp-controller="Payroll" asp-action="Index" aria-current="@(section == "Payroll" ? "page" : null)">Nómina</a>
+                    }
+                </nav>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="app-session">
+                    <button class="app-signout" type="submit">Cerrar sesión</button>
+                </form>
+            }
+        </div>
     </header>
-    <main class="container py-4">
+    <main id="contenido" tabindex="-1" class="app-container app-content">
         @RenderBody()
     </main>
 </body>

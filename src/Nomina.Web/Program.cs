@@ -46,6 +46,7 @@ if (!app.Environment.IsDevelopment())
     });
     app.UseHttpsRedirection();
 }
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
