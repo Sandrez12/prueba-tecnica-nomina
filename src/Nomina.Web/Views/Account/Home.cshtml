@@ -8,6 +8,10 @@
 {
     <a asp-controller="People" asp-action="Index" class="btn btn-primary mb-3">Gestionar personas</a>
 }
+@if (User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Lead))
+{
+    <a asp-controller="WorkEvents" asp-action="Index" class="btn btn-outline-primary mb-3">Novedades laborales</a>
+}
 <form asp-action="Logout" method="post">
     <button type="submit" class="btn btn-outline-secondary btn-lg">Cerrar sesión</button>
 </form>

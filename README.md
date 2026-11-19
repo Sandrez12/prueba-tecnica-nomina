@@ -42,4 +42,14 @@ Ejecuta `dotnet test` para comprobar que solo administración accede a su ruta y
 
 ## Dar de alta una persona
 
-Inicia sesión como administrador y abre **Gestionar personas → Nueva persona**. Usa datos ficticios, registra una dirección y un teléfono y escribe el salario en pesos enteros (`1500000`, sin separadores). La cuenta y el rol se guardan juntos; el listado administrativo no muestra contraseñas. Esta versión no edita ni elimina personas.
+Inicia sesión como administrador y abre **Gestionar personas → Nueva persona**. Usa datos ficticios, registra una dirección y un teléfono y escribe el salario en pesos enteros (`1500000`, sin separadores). La cuenta y el rol se guardan juntos; el listado administrativo no muestra contraseñas. Desde el listado también puedes editar la ficha o retirar a la persona: si tiene registros vinculados, se desactiva en lugar de eliminarla. La cuenta administrativa está protegida. Esta edición no permite restablecer contraseñas.
+
+## Registrar novedades laborales
+
+Desde **Novedades laborales**, selecciona una persona activa, una fecha no futura y un tipo. Cualquier segundo registro para la misma persona y fecha se rechaza, aunque sea de otro tipo. Tampoco se aceptan nuevas novedades de meses cerrados. Jefatura solo ve y registra para integrantes de cuadrillas que lidera; la asignación de cuadrillas y la corrección de novedades aún no tienen pantalla.
+
+| Método y ruta | Resultado |
+| --- | --- |
+| `GET /api/novedades` | Hasta 100 novedades recientes visibles para la sesión. |
+| `GET /api/novedades/token` | Devuelve el nombre y valor del encabezado antifalsificación y establece su cookie. |
+| `POST /api/novedades` | Con la cookie de sesión y el token antifalsificación, acepta un JSON como `{"personId":"id-asignado","date":"2026-11-01","kind":2}` y devuelve `201` con el ID. Tipos: `1` laborado, `2` incapacidad, `3` ausencia, `4` adicional. Un duplicado o un período cerrado devuelve `409`. |

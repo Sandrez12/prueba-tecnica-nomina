@@ -1,0 +1,76 @@
+@model Nomina.Web.Controllers.WorkEventsPage
+@using Nomina.Web.Data
+@{
+    ViewData["Title"] = "Novedades laborales";
+    var kinds = new Dictionary<WorkEventKind, string>
+    {
+        [WorkEventKind.Worked] = "Laborado",
+        [WorkEventKind.Sick] = "Incapacidad",
+        [WorkEventKind.Absent] = "Ausencia",
+        [WorkEventKind.Extra] = "Adicional"
+    };
+}
+<a asp-controller="Account" asp-action="Home" class="d-inline-block mb-3">Volver al inicio</a>
+<h1 class="h3">Novedades laborales</h1>
+<p>Registra un solo tipo de novedad por persona y fecha.</p>
+@if (TempData["WorkEventMessage"] is string message)
+{
+    <p class="alert alert-success" role="status">@message</p>
+}
+@if (Model.People.Count == 0)
+{
+    <p>No hay personas activas disponibles para registrar novedades.</p>
+}
+else
+{
+    <form asp-action="Register" method="post" class="bg-body border rounded-3 p-3 p-md-4 mb-4">
+        <div asp-validation-summary="All" class="text-danger" aria-live="polite"></div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-5">
+                <label for="PersonId" class="form-label">Persona</label>
+                <select id="PersonId" name="PersonId" class="form-select" required>
+                    <option value="">Selecciona una persona</option>
+                    @foreach (var person in Model.People)
+                    {
+                        <option value="@person.Id" selected="@(person.Id == Model.Input.PersonId)">@person.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <label for="Date" class="form-label">Fecha</label>
+                <input id="Date" name="Date" class="form-control" type="date"
+                    value="@Model.Input.Date?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)" required>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <label for="Kind" class="form-label">Tipo de novedad</label>
+                <select id="Kind" name="Kind" class="form-select" required>
+                    <option value="">Selecciona un tipo</option>
+                    @foreach (var kind in kinds)
+                    {
+                        <option value="@((int)kind.Key)" selected="@(kind.Key == Model.Input.Kind)">@kind.Value</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Registrar novedad</button>
+    </form>
+}
+<h2 class="h5">Registros recientes</h2>
+@if (Model.Events.Count == 0)
+{
+    <p>Aún no hay novedades visibles.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead><tr><th scope="col">Fecha</th><th scope="col">Persona</th><th scope="col">Tipo</th></tr></thead>
+            <tbody>
+            @foreach (var entry in Model.Events)
+            {
+                <tr><td>@entry.Date.ToString("dd/MM/yyyy")</td><td>@entry.Name</td><td>@kinds[entry.Kind]</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

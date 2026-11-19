@@ -37,6 +37,8 @@ public sealed class AccessTests(WebApplicationFactory<Program> factory)
     [InlineData("/personas/nueva")]
     [InlineData("/personas/demo-id/editar")]
     [InlineData("/personas/demo-id/eliminar")]
+    [InlineData("/novedades")]
+    [InlineData("/api/novedades")]
     public async Task WorkerCannotOpenOrSubmitProtectedRoutes(string path)
     {
         using var app = factory.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
