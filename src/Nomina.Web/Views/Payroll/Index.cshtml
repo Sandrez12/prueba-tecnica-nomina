@@ -1,0 +1,78 @@
+@model Nomina.Web.Controllers.PayrollPage
+@using System.Globalization
+@{
+    ViewData["Title"] = "Nómina mensual";
+    var locale = CultureInfo.GetCultureInfo("es-CO");
+    string Cop(decimal amount) => amount.ToString("N0", locale);
+}
+<a asp-controller="Account" asp-action="Home" class="d-inline-block mb-3">Volver al inicio</a>
+<h1 class="h3">Nómina mensual</h1>
+<form asp-action="Index" method="get" class="row g-3 align-items-end mb-4">
+    <div class="col-6 col-sm-auto">
+        <label for="year" class="form-label">Año</label>
+        <input id="year" name="year" type="number" min="1" max="9999" value="@Model.Year" class="form-control" required>
+    </div>
+    <div class="col-6 col-sm-auto">
+        <label for="month" class="form-label">Mes</label>
+        <select id="month" name="month" class="form-select">
+            @for (var i = 1; i <= 12; i++)
+            {
+                <option value="@i" selected="@(i == Model.Month)">@locale.DateTimeFormat.GetMonthName(i)</option>
+            }
+        </select>
+    </div>
+    <div class="col-12 col-sm-auto"><button class="btn btn-primary" type="submit">Consultar período</button></div>
+</form>
+@if (TempData["PayrollMessage"] is string message)
+{
+    <p class="alert alert-info" role="status">@message</p>
+}
+@if (Model.Report is not { } report)
+{
+    <p>No hay una nómina cerrada disponible para este período.</p>
+}
+else
+{
+    <h2 class="h5">@(report.ClosedAt.HasValue ? "Nómina cerrada" : "Vista previa") · @Model.Year-@Model.Month.ToString("00")</h2>
+    <p>Reglas @report.RuleVersion. Todos los importes están en COP; los días laborados normales ya están incluidos en el salario base.</p>
+    @if (report.Lines.Count == 0)
+    {
+        <p>No hay personas activas para liquidar.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped align-middle text-end">
+                <thead><tr>
+                    <th scope="col" class="text-start">Persona</th><th scope="col">Base</th><th scope="col">Laborados</th>
+                    <th scope="col">Ausencias</th><th scope="col">Incapacidades</th><th scope="col">Adicionales</th>
+                    <th scope="col">Ajuste mínimo</th><th scope="col">Total</th>
+                </tr></thead>
+                <tbody>
+                @foreach (var line in report.Lines)
+                {
+                    <tr>
+                        <th scope="row" class="text-start">@line.PersonName <span class="d-block fw-normal">@line.Document</span></th>
+                        <td>@Cop(line.MonthlySalary)</td><td>@line.WorkedDays d</td>
+                        <td>@Cop(line.AbsenceAdjustment)<span class="d-block text-body-secondary">@line.AbsentDays d</span></td>
+                        <td>@Cop(line.SicknessAdjustment)<span class="d-block text-body-secondary">@line.SickDays d</span></td>
+                        <td>@Cop(line.ExtraAdjustment)<span class="d-block text-body-secondary">@line.ExtraDays d</span></td>
+                        <td>@Cop(line.MinimumAdjustment)</td><td class="fw-semibold">@Cop(line.Total)</td>
+                    </tr>
+                }
+                </tbody>
+                <tfoot><tr><th scope="row" colspan="7">Total mostrado (COP)</th><td class="fw-bold">@Cop(report.Total)</td></tr></tfoot>
+            </table>
+        </div>
+        @if (Model.CanClose && report.Revision is not null)
+        {
+            <form asp-action="Close" method="post" class="mt-3">
+                <input type="hidden" name="Year" value="@report.Year">
+                <input type="hidden" name="Month" value="@report.Month">
+                <input type="hidden" name="Revision" value="@report.Revision">
+                <p>El cierre guarda estos importes de forma definitiva. No se puede reabrir.</p>
+                <button class="btn btn-primary" type="submit">Cerrar nómina del período</button>
+            </form>
+        }
+    }
+}

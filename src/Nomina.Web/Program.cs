@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Nomina.Web.Auth;
 using Nomina.Web.Data;
+using Nomina.Web.Payroll;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 var connectionString = builder.Configuration.GetConnectionString("Nomina");
 builder.Services.AddDbContext<NominaDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddScoped<PayrollService>();
 builder.Services.AddIdentity<Person, IdentityRole>(options =>
 {
     options.Password.RequiredLength = 12;

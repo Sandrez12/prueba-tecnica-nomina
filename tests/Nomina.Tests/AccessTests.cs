@@ -58,6 +58,26 @@ public sealed class AccessTests(WebApplicationFactory<Program> factory)
     }
 
     [Fact]
+    public async Task WorkerCannotClosePayrollThroughWebOrApi()
+    {
+        using var app = factory.WithWebHostBuilder(builder => builder.ConfigureServices(services =>
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = "Test";
+                    options.DefaultForbidScheme = "Test";
+                })
+                .AddScheme<AuthenticationSchemeOptions, TestRoleHandler>("Test", _ => { })));
+        using var client = CreateClient(app);
+        client.DefaultRequestHeaders.Add("X-Test-Role", Roles.Worker);
+        using var form = new FormUrlEncodedContent([]);
+        using var api = new StringContent("{}", System.Text.Encoding.UTF8, "application/json");
+        using var browser = await client.PostAsync("/nomina/cerrar", form);
+        using var json = await client.PostAsync("/api/nomina/cerrar", api);
+        Assert.Equal(HttpStatusCode.Forbidden, browser.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, json.StatusCode);
+    }
+
+    [Fact]
     public async Task AnonymousUserIsRedirectedToLogin()
     {
         using var client = CreateClient(factory);

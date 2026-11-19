@@ -4,7 +4,7 @@ Reglas simplificadas para la prueba. No son una liquidación legal colombiana. L
 
 ## Cálculo por persona
 
-El mes es calendario, pero la **tarifa diaria siempre es salario mensual ÷ 30**, incluso en febrero o en un mes de 31 días. No se prorratea por cambio salarial, alta o baja a mitad de mes. Solo se incluyen personas activas al corte.
+El mes es calendario, pero la **tarifa diaria siempre es salario mensual ÷ 30**, incluso en febrero o en un mes de 31 días. No se prorratea por cambio salarial, alta o baja a mitad de mes. Solo se incluyen personas activas al corte; la cuenta técnica de administración no participa en la liquidación. Se permite cerrar el mes actual, pero no uno futuro; el cierre no indica que se efectuó el pago.
 
 | Concepto | Importe |
 | --- | --- |

@@ -12,6 +12,10 @@
 {
     <a asp-controller="WorkEvents" asp-action="Index" class="btn btn-outline-primary mb-3">Novedades laborales</a>
 }
+@if (User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Accountant) || User.IsInRole(Roles.Worker))
+{
+    <a asp-controller="Payroll" asp-action="Index" class="btn btn-outline-primary mb-3">Nómina mensual</a>
+}
 <form asp-action="Logout" method="post">
     <button type="submit" class="btn btn-outline-secondary btn-lg">Cerrar sesión</button>
 </form>

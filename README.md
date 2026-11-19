@@ -53,3 +53,12 @@ Desde **Novedades laborales**, selecciona una persona activa, una fecha no futur
 | `GET /api/novedades` | Hasta 100 novedades recientes visibles para la sesión. |
 | `GET /api/novedades/token` | Devuelve el nombre y valor del encabezado antifalsificación y establece su cookie. |
 | `POST /api/novedades` | Con la cookie de sesión y el token antifalsificación, acepta un JSON como `{"personId":"id-asignado","date":"2026-11-01","kind":2}` y devuelve `201` con el ID. Tipos: `1` laborado, `2` incapacidad, `3` ausencia, `4` adicional. Un duplicado o un período cerrado devuelve `409`. |
+
+## Calcular y cerrar nómina
+
+Como administrador, abre **Nómina mensual**, consulta el mes y revisa los conceptos antes de pulsar **Cerrar nómina del período**. Cerrar guarda una copia definitiva; no significa que se haya hecho el pago. Si cambian los datos de la vista previa, la aplicación pide revisarla de nuevo. Contabilidad solo consulta períodos cerrados; cada trabajador solo ve su línea y total.
+
+| Método y ruta | Resultado |
+| --- | --- |
+| `GET /api/nomina/{year}/{month}` | Devuelve la vista previa a administración si el mes está abierto, o el histórico según el rol. Devuelve `404` si no hay reporte visible. |
+| `POST /api/nomina/cerrar` | Solo administración. Con la sesión y el token de `GET /api/novedades/token`, envía `year`, `month` y `revision` de la vista previa. Devuelve `200` con el histórico o `409` si cambió, está vacío o ya se cerró. |
