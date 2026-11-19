@@ -1,0 +1,54 @@
+@model Nomina.Web.Controllers.NewPersonInput
+@using Nomina.Web.Auth
+@{
+    ViewData["Title"] = "Nueva persona";
+}
+<div class="mx-auto" style="max-width: 46rem">
+    <a asp-action="Index" class="d-inline-block mb-3">Volver a personas</a>
+    <h1 class="h3">Nueva persona</h1>
+    <p>Crea la ficha laboral y la cuenta con la que la persona podrá iniciar sesión.</p>
+    <form asp-action="Create" method="post" class="bg-body border rounded-3 p-3 p-md-4">
+        <div asp-validation-summary="All" class="text-danger" aria-live="polite"></div>
+        <fieldset class="mb-4">
+            <legend class="h5">Datos laborales</legend>
+            <div class="row g-3">
+                <div class="col-sm-6"><label asp-for="FirstName" class="form-label"></label><input asp-for="FirstName" class="form-control" required maxlength="100"></div>
+                <div class="col-sm-6"><label asp-for="LastName" class="form-label"></label><input asp-for="LastName" class="form-control" required maxlength="100"></div>
+                <div class="col-sm-6"><label asp-for="Document" class="form-label"></label><input asp-for="Document" class="form-control" required maxlength="40"></div>
+                <div class="col-sm-6"><label asp-for="MonthlySalary" class="form-label"></label><input asp-for="MonthlySalary" class="form-control" type="number" min="0" max="999999999" step="1" required></div>
+                <div class="col-sm-7"><label asp-for="Address" class="form-label"></label><input asp-for="Address" class="form-control" required maxlength="250"></div>
+                <div class="col-sm-5"><label asp-for="Phone" class="form-label"></label><input asp-for="Phone" class="form-control" type="tel" required maxlength="40"></div>
+            </div>
+        </fieldset>
+        <fieldset class="mb-4">
+            <legend class="h5">Acceso al sistema</legend>
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label asp-for="UserName" class="form-label"></label>
+                    <input asp-for="UserName" class="form-control" autocomplete="off" required maxlength="256">
+                </div>
+                <div class="col-sm-6">
+                    <label asp-for="Role" class="form-label"></label>
+                    <select asp-for="Role" class="form-select">
+                        <option value="@Roles.Worker">Trabajador</option>
+                        <option value="@Roles.Lead">Jefatura</option>
+                        <option value="@Roles.Accountant">Contabilidad</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input id="Password" name="Password" type="password" class="form-control"
+                           autocomplete="new-password" minlength="12" maxlength="128"
+                           aria-describedby="password-help" required>
+                    <div id="password-help" class="form-text">Mínimo 12 caracteres, con mayúscula, minúscula, número y símbolo.</div>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="IsActive" class="form-check-input"><label asp-for="IsActive" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        <button type="submit" class="btn btn-primary">Crear persona</button>
+    </form>
+</div>

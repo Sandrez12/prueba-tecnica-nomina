@@ -39,3 +39,7 @@ Una vez aplicado el esquema, configurar `BootstrapAdmin__UserName` y `BootstrapA
 Al arrancar, Identity crea los roles de la prueba y, si no existe otro administrador, crea la cuenta y guarda el hash de la contraseña. Verifica el inicio de sesión en `/cuenta/ingresar` por HTTPS. Después elimina ambas variables `BootstrapAdmin__*`; deja la conexión SQL. No existe un formulario de autorregistro. En desarrollo, las claves equivalentes en User Secrets son `BootstrapAdmin:UserName` y `BootstrapAdmin:Password`.
 
 Ejecuta `dotnet test` para comprobar que solo administración accede a su ruta y que el formulario rechaza envíos sin token antifalsificación.
+
+## Dar de alta una persona
+
+Inicia sesión como administrador y abre **Gestionar personas → Nueva persona**. Usa datos ficticios, registra una dirección y un teléfono y escribe el salario en pesos enteros (`1500000`, sin separadores). La cuenta y el rol se guardan juntos; el listado administrativo no muestra contraseñas. Esta versión no edita ni elimina personas.
