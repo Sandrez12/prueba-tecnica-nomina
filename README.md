@@ -31,3 +31,11 @@ dotnet ef migrations script --idempotent --project src/Nomina.Web -o artifacts/e
 ```
 
 En el panel HTTPS de Somee, abre **MS SQL → PruebaTecDB → Run scripts → From your computer** y selecciona `artifacts/esquema-somee.sql`. No lo subas al File Manager del sitio. El script registra la migración en `__EFMigrationsHistory`; verifica esa tabla desde la consola T-SQL. `/health/db` solo comprueba la conexión y no sustituye este paso.
+
+## Crear el primer administrador
+
+Una vez aplicado el esquema, configurar `BootstrapAdmin__UserName` y `BootstrapAdmin__Password` como variables privadas de IIS junto con `ConnectionStrings__Nomina` en el `web.config` desplegado. La contraseña debe tener al menos 12 caracteres, con mayúscula, minúscula, número y símbolo. No compartir el archivo configurado ni incluirlo en el repositorio.
+
+Al arrancar, Identity crea los roles de la prueba y, si no existe otro administrador, crea la cuenta y guarda el hash de la contraseña. Verifica el inicio de sesión en `/cuenta/ingresar` por HTTPS. Después elimina ambas variables `BootstrapAdmin__*`; deja la conexión SQL. No existe un formulario de autorregistro. En desarrollo, las claves equivalentes en User Secrets son `BootstrapAdmin:UserName` y `BootstrapAdmin:Password`.
+
+Ejecuta `dotnet test` para comprobar que solo administración accede a su ruta y que el formulario rechaza envíos sin token antifalsificación.

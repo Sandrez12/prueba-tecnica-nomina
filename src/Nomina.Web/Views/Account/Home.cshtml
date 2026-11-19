@@ -1,0 +1,8 @@
+@{
+    ViewData["Title"] = "Inicio";
+}
+<h1 class="h3">Sesión iniciada</h1>
+<p>Conectado como <strong>@User.Identity?.Name</strong>.</p>
+<form asp-action="Logout" method="post">
+    <button type="submit" class="btn btn-outline-secondary btn-lg">Cerrar sesión</button>
+</form>
